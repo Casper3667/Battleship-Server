@@ -2,6 +2,6 @@
 {
     internal static class PlayerCount
     {
-        static internal int Players = 0;
+        internal static int Players = 0;
     }
 }
