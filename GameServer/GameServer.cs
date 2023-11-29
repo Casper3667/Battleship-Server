@@ -21,7 +21,7 @@ namespace GameServer
         //List<TcpClient> clients;
 
         public Game Game { get; private set; }     
-
+        public CancellationTokenSource gameCancellationSource { get; private set; }
 
         private int maxPlayers = 2;
         public List<TcpClient> NotVerifiedClients = new List<TcpClient>();
@@ -48,6 +48,7 @@ namespace GameServer
 
             source = new CancellationTokenSource();
             cancellationToken = source.Token;
+            gameCancellationSource = new CancellationTokenSource();
 
             ServerThread = new Thread(() => AcceptNewClients(server)) { IsBackground = true };
             //acceptClientThread = new Thread(() => AcceptNewClients(server));
@@ -96,11 +97,37 @@ namespace GameServer
                 }
                 else if (Players.Count == maxPlayers) 
                 {
-                    Game = new Game(this, Players);
-                    Game.StartGame();
+                    StartGame();
                 }
 
             }
+        }
+        public void StartGame()
+        {
+            gameCancellationSource = new CancellationTokenSource();
+            Action action = () =>
+            {
+                Game = new Game(this, Players);
+                Game.StartGame();
+            };
+            try
+            {
+                var gameCancellationToken = gameCancellationSource.Token;
+                Task startGameTask = new Task(action, gameCancellationToken);
+                startGameTask.Start();
+                startGameTask.Wait(gameCancellationToken);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("GameServer_Tried and Failed to Start the Game");
+
+                throw;
+            }
+            
+
+
+            //Game = new Game(this, Players);
+            //Game.StartGame();
         }
         private void AddTempClient(TcpClient client)
         {
@@ -131,9 +158,18 @@ namespace GameServer
         }
         private void RemovePlayer(Player player)
         {
+
             playersMutex.WaitOne();
             Players.Remove(player);
             playersMutex.ReleaseMutex();
+
+            if( Game!= null && Game.GameRunning==true)
+            {
+                Game.EndGame();
+            }
+
+            gameCancellationSource.Cancel(); // TODO: SOFIE Might want to move this cancellation
+            
         }
         private void VerifyClient(TcpClient client)
         {
