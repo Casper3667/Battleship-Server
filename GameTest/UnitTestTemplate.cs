@@ -1,6 +1,6 @@
 namespace GameTest
 {
-    public class Tests
+    public class Tests_Template
     {
         [SetUp]
         public void Setup()
