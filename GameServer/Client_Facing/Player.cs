@@ -17,8 +17,9 @@ namespace GameServer.Client_Facing
                 int score = 0;
                 foreach(var a in AttackScreen)
                 {
-                    if((int)a==(int)Attack.Hit) score++;
+                    if(a==(byte)Attack.Hit) score++;
                 }
+                Testing.Print("Score: " + score);
                 return score;
             } }
         public int Health { get
@@ -79,13 +80,17 @@ namespace GameServer.Client_Facing
         {
             if(value!=null)
             {
+                Testing.Print($"Updating Point [{point.X},{point.Y}] in Defence Screen From:[{DefenceScreen[(int)point.X, (int)point.Y]}] To:[{(byte)value}]");
                 DefenceScreen[(int)point.X, (int)point.Y] = (byte)value;
+                Testing.Print($"[{point.X},{point.Y}] in Defence Screen is now: [{DefenceScreen[(int)point.X, (int)point.Y]}]");
             }
            
         }
         public void UpdateAttackScreen(Vector2 point, Attack value)
         {
+            Testing.Print($"Updating Point [{point.X},{point.Y}] in Attack Screen From:[{AttackScreen[(int)point.X, (int)point.Y]}] To:[{(byte)value}]");
             AttackScreen[(int)point.X, (int)point.Y] = (byte)value;
+            Testing.Print($"[{point.X},{point.Y}] in Attack Screen is now: [{AttackScreen[(int)point.X, (int)point.Y]}]");
         }
         public bool CheckIfShotHits(Vector2 shotAgainst)
         {

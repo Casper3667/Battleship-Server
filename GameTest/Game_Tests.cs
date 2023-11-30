@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ namespace GameTest
 
             Assert.Pass();
         }
+        #region - ConvertMultiArrayToString TESTS
         [Test]
         public void Test_ConvertMultiArrayToString_YAxisIsCorrect()
         {
@@ -62,6 +64,8 @@ namespace GameTest
 
             Assert.That(result, Is.EqualTo(expect));
         }
+        #endregion
+        #region - GivePlayersGameBoard & GivePlayersDefaultGameBoard TESTS
         [Test]
         public void Test_GivePlayersGameBoard_GamesPlayers()
         {
@@ -77,6 +81,7 @@ namespace GameTest
             Assert.That(result1, Is.EqualTo(expect1));
             Assert.That(result2, Is.EqualTo(expect2));
         }
+        [Test]
         public void Test_GivePlayersGameBoard_TestsPlayers()
         {
             var expect1 = new byte[,] { { 1, 2 }, { 3, 0 } };
@@ -117,22 +122,25 @@ namespace GameTest
             var result2 = p2.DefenceScreen;
 
 
-           // Assert.Multiple()
+            // Assert.Multiple()
             Assert.That(result1, Is.EqualTo(expect1));
             Assert.That(result2, Is.EqualTo(expect2));
         }
-        
+        #endregion
+
+
         //[Test]
         //public void Test_Game_Mock_TestInterruptingUpdateLoop()
         //{
         //    game.StartTestUpdateLoopBreak();
         //    int expect = 1;
-            
+
         //    int result=game.UpdateLoopTestList.Count;
 
         //    Assert.That(result, Is.EqualTo(expect));
         //}
 
+        #region - WriteGameStateMessage TESTS
         [Test]
         public void Test_Game_WriteGameStateMessage_DuringGame()
         {
@@ -143,13 +151,16 @@ namespace GameTest
         {
             Assert.Inconclusive();
         }
+        #endregion
 
+
+        #region - GetOtherPlayer TESTS
         [Test]
         public void Test_Game_GetOtherPlayer_In_Player1()
         {
             var input = p1;
             var expect = p2;
-            var result= game.GetOtherPlayer(input);
+            var result = game.GetOtherPlayer(input);
             Assert.That(result, Is.EqualTo(expect));
 
 
@@ -171,33 +182,129 @@ namespace GameTest
             var result = game.GetOtherPlayer(input);
             Assert.That(result, Is.EqualTo(expect));
         }
+        #endregion
 
+        #region - CheckWhoIsLeading TESTS
         [Test]
         public void Test_Game_CheckWhoIsLeading_P1()
         {
-            Assert.Inconclusive();
+            p1.UpdateAttackScreen(new System.Numerics.Vector2(0, 0), Player.Attack.Hit);
+            p1.UpdateAttackScreen(new System.Numerics.Vector2(0, 1), Player.Attack.Hit);
+            //p1.AttackScreen[0, 0] = 2; // Makes it So that P1 is leading since p2 only has 0s
+            Player? expect = p1;
+
+            Player? result = game.CheckWhoIsLeading();
+
+            Assert.That(result, Is.SameAs(expect));
         }
         [Test]
         public void Test_Game_CheckWhoIsLeading_P2()
         {
-            Assert.Inconclusive();
+            p2.UpdateAttackScreen(new System.Numerics.Vector2(0, 0), Player.Attack.Hit);
+            p2.UpdateAttackScreen(new System.Numerics.Vector2(0, 3), Player.Attack.Hit);
+            //p2.AttackScreen[0, 0] = 2; // Makes it So that P2 is leading since p1 only has 0s
+            Player? expect = p2;
+
+            Player? result = game.CheckWhoIsLeading();
+
+            Assert.That(result, Is.SameAs(expect));
+           
         }
         [Test]
-        public void Test_Game_CheckWhoIsLeading_NoOne()
+        public void Test_Game_CheckWhoIsLeading_NoOne_1HitEach()
         {
-            Assert.Inconclusive();
+            p1.AttackScreen[0, 0] = 2; // Makes it So that P1 is leading since p2 only has 0s
+            p2.AttackScreen[0, 0] = 2; // Makes it So that both have the same ammount of 2's
+            Player? expect = null;
+
+            Player? result = game.CheckWhoIsLeading();
+
+            Assert.That(result, Is.SameAs(expect));
+            //Assert.Inconclusive();
         }
+        [Test]
+        public void Test_Game_CheckWhoIsLeading_NoOne_0HitsEach()
+        {
+           
+            Player? expect = null;
+
+            Player? result = game.CheckWhoIsLeading();
+
+            Assert.That(result, Is.SameAs(expect));
+            //Assert.Inconclusive();
+        }
+        #endregion
+
+        #region - CheckHasGameBeenWon TESTS
         [Test]
         public void Test_Game_CheckHasGameBeenWon_False()
         {
+            var expectWon = false;
+            var expectp1 = game.Player1DefaultDefence;
+            var expectp2 = game.Player2DefaultDefence;
+            game.GivePlayersDefaultGameBoards();
+            var result=game.CheckHasGameBeenWon();
 
-            Assert.Inconclusive();
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.EqualTo(expectWon), "Won");
+                Assert.That(game.Player1.DefenceScreen, Is.EqualTo(expectp1), "Checks Player 1's Defence Screen");
+                Assert.That(game.Player2.DefenceScreen, Is.EqualTo(expectp2), "Checks Player 2's Defence Screen");
+            });
         }
         [Test]
-        public void Test_Game_CheckHasGameBeenWon_True()
+        public void Test_Game_CheckHasGameBeenWon_True_BothDead()
         {
+            //When No Gameboard is Setup for either Player both palyers have no Ships and thus both are dead, thus game is won
+            //Though such a thing wouldnt happen in game since Is Won is checked after every turn so when one is dead thats the end of the game
+            var expectWon = true;
+            var expectp1 = new byte[10, 10];
+            var expectp2 = new byte[10, 10];
 
-            Assert.Inconclusive();
+            var result = game.CheckHasGameBeenWon();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.EqualTo(expectWon), "Won");
+                Assert.That(game.Player1.DefenceScreen, Is.EqualTo(expectp1), "Checks Player 1's Defence Screen");
+                Assert.That(game.Player2.DefenceScreen, Is.EqualTo(expectp2), "Checks Player 2's Defence Screen");
+            });
         }
+        [Test]
+        public void Test_Game_CheckHasGameBeenWon_True_Player1Wins()
+        {
+            var expectWon = true;
+            var expectp1 = game.Player1DefaultDefence;
+            var expectp2 = new byte[10, 10];
+
+            game.Player1.AssignDefenceScreen(game.Player1DefaultDefence);
+            var result = game.CheckHasGameBeenWon();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.EqualTo(expectWon), "Won");
+                Assert.That(game.Player1.DefenceScreen, Is.EqualTo(expectp1), "Checks Player 1's Defence Screen");
+                Assert.That(game.Player2.DefenceScreen, Is.EqualTo(expectp2), "Checks Player 2's Defence Screen");
+            });
+        }
+        [Test]
+        public void Test_Game_CheckHasGameBeenWon_True_Player2Wins()
+        {
+            var expectWon = true;
+            var expectp1 = new byte[10, 10];
+            var expectp2 = game.Player2DefaultDefence;
+
+            game.Player2.AssignDefenceScreen(game.Player2DefaultDefence);
+            var result = game.CheckHasGameBeenWon();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.EqualTo(expectWon), "Won");
+                Assert.That(game.Player1.DefenceScreen, Is.EqualTo(expectp1), "Checks Player 1's Defence Screen");
+                Assert.That(game.Player2.DefenceScreen, Is.EqualTo(expectp2), "Checks Player 2's Defence Screen");
+            });
+        }
+        #endregion
+
     }
 }

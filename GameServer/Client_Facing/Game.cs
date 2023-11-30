@@ -102,19 +102,30 @@ namespace GameServer.Client_Facing
                 //"Turn Is Forfit"
                 return true;
             }
-            Player otherPlayer = GetOtherPlayer(CurrentPlayersTurn);
-            ShotFeedback feedback= ShotHandler.HandleShot(CurrentPlayersTurn, otherPlayer, shot);
-            
-            if(feedback.IsValidShot)
+            ShotFeedback? feedback=null;
+            if (CurrentPlayersTurn!=null)
             {
-                LastAction = $"{CurrentPlayersTurn} Shot at [{(int)feedback.ShotCoordinates.X},{(int)feedback.ShotCoordinates.Y}], The shot was a {feedback.Attacker_Reaction.ToString().ToUpper()}"; 
-                return false;
+                Player otherPlayer = GetOtherPlayer(CurrentPlayersTurn);
+                Player attacker = CurrentPlayersTurn;
+                feedback = ShotHandler.HandleShot(ref attacker, ref otherPlayer, shot);
             }
-            else
+           if(feedback!=null)
             {
-                LastAction = $"{CurrentPlayersTurn}'s Shot was Invalid and they have thus forfitted their turn due to cheating";
+                if (feedback.IsValidShot)
+                {
+                    LastAction = $"{CurrentPlayersTurn} Shot at [{(int)feedback.ShotCoordinates.X},{(int)feedback.ShotCoordinates.Y}], The shot was a {feedback.Attacker_Reaction.ToString().ToUpper()}";
+                    return false;
+                }
+                else
+                {
+                    LastAction = $"{CurrentPlayersTurn}'s Shot was Invalid and they have thus forfitted their turn due to cheating";
+                    return true;
+                }
+            }
+           else
                 return true;
-            }
+            
+           
         }
         //public ShotMessage? StartWaitForShot()
         //{
@@ -162,8 +173,10 @@ namespace GameServer.Client_Facing
         }
         public Player? CheckWhoIsLeading()
         {
+            Testing.Print("Getting Player 1s Score") ;
             int P1Score = Player1.Score;
-            int P2Score = Player1.Score;
+            Testing.Print("Getting Player 2s Score");
+            int P2Score = Player2.Score;
             Player leader;
 
             if (P1Score > P2Score) leader = Player1;

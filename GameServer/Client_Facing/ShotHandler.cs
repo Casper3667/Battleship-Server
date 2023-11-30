@@ -1,19 +1,21 @@
 ﻿using GameServer.Client_Facing.Messages;
+using Microsoft.AspNetCore.DataProtection.XmlEncryption;
 using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
 
 namespace GameServer.Client_Facing
 {
     public static class ShotHandler
     {
-        public static ShotFeedback HandleShot(Player Attacker, Player Defender, ShotMessage shotMessage)
+        public static ShotFeedback HandleShot(ref Player Attacker, ref Player Defender, ShotMessage shotMessage)
         {
             ShotFeedback feedback;
             var shot = DecodeShot(shotMessage);
             if(CheckIfShotIsInsideBounds(Defender,shot))
             {
                 (Player.Attack attacker_reaction, Player.Defence? defender_reaction) =SeeIfAttackHits(shot, Defender);
-                ApplyHitToPlayers(shot, Attacker, attacker_reaction, Defender, defender_reaction);
+                ApplyHitToPlayers(shot, ref Attacker, attacker_reaction, ref Defender, defender_reaction);
                 feedback = new(true,shot,defender_reaction,attacker_reaction);
             }
             else
@@ -31,7 +33,21 @@ namespace GameServer.Client_Facing
         // TODO: SOFIE Make Code For Checking if Shot is Inside Bounds
         public static bool CheckIfShotIsInsideBounds(Player defender,Vector2 shot)
         {
-            return true;
+            bool valid = false;
+            int sX = (int)shot.X;
+            int sY = (int)shot.Y;
+
+            int gX = defender.DefenceScreen.GetLength(0);
+            int gY = defender.DefenceScreen.GetLength(1);
+
+            if (sX >= 0 && sX < gX)
+                if (sY >= 0 && sY < gY)
+                    valid = true;
+
+
+
+
+            return valid;
         }
         public static (Player.Attack attacker_reaction, Player.Defence? defender_reaction) SeeIfAttackHits(Vector2 shot,Player Defender)
         {
@@ -51,7 +67,7 @@ namespace GameServer.Client_Facing
             return ( attacker_reaction, defender_reaction); 
         }
         
-        public static void ApplyHitToPlayers(Vector2 shot,Player Attacker,  Player.Attack attacker_reaction,Player Defender, Player.Defence? defender_reaction)
+        public static void ApplyHitToPlayers(Vector2 shot,ref Player Attacker,  Player.Attack attacker_reaction,ref Player Defender, Player.Defence? defender_reaction)
         {
             Attacker.UpdateAttackScreen(shot, attacker_reaction);
             Defender.UpdateDefenceScreen(shot, defender_reaction);
