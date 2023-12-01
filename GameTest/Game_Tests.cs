@@ -59,7 +59,7 @@ namespace GameTest
         {
             byte[,] input = new byte[,] { { 1, 2 }, { 0, 1 } };
             string expect = "1,2,0,1";
-            byte result = game.ConvertMultiArrayToString(input);
+            string result = game.ConvertMultiArrayToString(input);
 
             Assert.That(result, Is.EqualTo(expect));
         }
