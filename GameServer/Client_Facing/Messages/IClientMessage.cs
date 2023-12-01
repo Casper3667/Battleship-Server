@@ -10,10 +10,12 @@ namespace GameServer.Client_Facing.Messages
     {
         public int X { get; set; }
         public int Y { get; set; }
+        public bool ValidShotMessage { get; set; }
     }
-    public class RawChatMessageOut : IClientMessage
+    public class RawChatMessageFromClient : IClientMessage
     {
-        public string From { get; set; }
-        public string Message { get; set; }
+        public string From { get; set; } = "";
+        public string Message { get; set; } = "";
+        public bool ValidRawChatMessageFromClient { get; set; }
     }
 }
