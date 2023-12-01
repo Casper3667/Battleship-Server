@@ -1,0 +1,49 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gameserver
+  labels:
+    app: gameserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameserver
+  template:
+    metadata:
+      labels:
+        app: gameserver
+    spec:
+      containers:
+      - name: gameserver-container
+        image: gameserver:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        readinessProbe:
+          httpGet:
+              path: /health/readiness
+              port: 80
+          initialDelaySeconds: 10
+          timeoutSeconds: 30
+          periodSeconds: 60
+          successThreshold: 1
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+              path: /health/liveness
+              port: 80
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 15
+          successThreshold: 1
+          failureThreshold: 3
