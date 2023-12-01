@@ -19,21 +19,27 @@ namespace GameTest
         {
             GS = new GameServer.GameServer(IPAddress.Any,000,2);
         }
-
         [Test]
-        public void Test_SerializeMessage_StartupMessage()
+        public void Test_GameServer_Setup()
         {
-            var input = new StartupMessage("Bob", false, null);
+            Assert.Pass();
+        }
+
+        #region - SerializeMessage TESTS
+        [Test]
+        public void Test_GameServer_SerializeMessage_StartupMessage()
+        {
+            StartupMessage input = new StartupMessage("Bob", false, null);
             string expect = "{\"ClientID\":\"Bob\",\"GameReady\":false,\"OtherPlayer\":null}";
-            string result=GS.SerializeMessage(input);
+            string result = GS.SerializeMessage(input);
             Assert.That(expect, Is.EqualTo(result));
             //Assert.AreEqual(expect,result);
         }
         [Test]
-        public void Test_SerializeMessage_RawGameStateMessage()
+        public void Test_GameServer_SerializeMessage_RawGameStateMessage()
         {
-            var input = new RawGameStateMessage("Bob","Shot","001001","2001010",false,true,false);
-            string expect = 
+            RawGameStateMessage input = new RawGameStateMessage("Bob", "Shot", "001001", "2001010", false, true, false);
+            string expect =
                 "{" +
                 "\"Opponent\":\"Bob\"," +
                 "\"LastAction\":\"Shot\"," +
@@ -45,19 +51,21 @@ namespace GameTest
                 "}";
             string result = GS.SerializeMessage(input);
             Assert.That(expect, Is.EqualTo(result));
-//            Assert.AreEqual(expect, result);
-   
+            //            Assert.AreEqual(expect, result);
+
         }
         [Test]
-        public void Test_SerializeMessage_RawChatMessage()
+        public void Test_GameServer_SerializeMessage_RawChatMessage()
         {
-            var input = new RawChatMessage("Bob","Sally","Hello World");
+            RawChatMessage input = new RawChatMessage("Bob", "Sally", "Hello World");
             string expect = "{\"From\":\"Bob\",\"To\":\"Sally\",\"Message\":\"Hello World\"}";
             string result = GS.SerializeMessage(input);
             Assert.That(expect, Is.EqualTo(result));
             //Assert.AreEqual(expect, result);
-           
+
         }
+        #endregion
+
 
     }
 }

@@ -59,7 +59,7 @@ namespace GameTest
         [Test]
         public void Test_Player_AssignDefenceScreen() 
         {
-            var input = new byte[,] { { 1, 3 }, { 2, 0 } };
+            byte[,] input = new byte[,] { { 1, 3 }, { 2, 0 } };
             byte[,] expect = input;
             player.AssignDefenceScreen(input);
             byte[,] result = player.DefenceScreen;
@@ -68,7 +68,7 @@ namespace GameTest
         [Test]
         public void Test_Player_AssignDefenceScreen_Default()
         {
-            var input =Player1DefaultDefence;
+            byte[,] input =Player1DefaultDefence;
             byte[,] expect = input;
             player.AssignDefenceScreen(input);
             byte[,] result = player.DefenceScreen;
