@@ -8,8 +8,8 @@ namespace GameServer
 {
     public class GameServer
     {
-        const string END_OF_MESSAGE = "#END#";
-        bool useEndMessage;
+        public const string END_OF_MESSAGE = "#END#";
+        public bool useEndMessage { get; private set; }
 
         public bool running { get; private set; } = false;
 

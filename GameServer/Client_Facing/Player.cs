@@ -38,12 +38,13 @@ namespace GameServer.Client_Facing
         }
         //bool IsLeading { get; set; }
 
-        public ShotMessage? LatestShotMessage { get; private set; }
+        public ClientMessageHandler ClientMessageHandler { get; private set; }
+     
 
 
         private JWT token;
         private TcpClient client;
-        private GameServer gameServer;
+        public  GameServer gameServer { get; private set; }
 
         private NetworkStream stream;
         public enum Attack
@@ -57,14 +58,18 @@ namespace GameServer.Client_Facing
         public Player(string username, TcpClient client,GameServer server,JWT token)
         {
             this.client = client;
+            ClientMessageHandler = new(this, this.client);
             Username = username;
             this.token = token;
             this.gameServer = server;
+            
             //AssignDefenceScreen();
         }
         public Player(string username, TcpClient client, GameServer server,JWT token, byte[,] defenceScreen)
         {
             this.client = client;
+
+            ClientMessageHandler = new(this, this.client);
             Username = username;
             this.token=token;
             this.gameServer = server;
@@ -112,32 +117,18 @@ namespace GameServer.Client_Facing
 
         public void StartHandeling()
         {
-            gameServer.AddPlayer(this);
             
+            gameServer.AddPlayer(this);
+            StartupProcedure();
         }
         public void StartupProcedure() {
             stream = client.GetStream();
 
             SendStartupMessage();
+            ClientMessageHandler.StartListeningForMessages(stream);
             ConnectPlayerToChatService();
         }
-        private void HandlePlayer()
-        {
-            while (gameServer.running)
-            {
-                try
-                {
-                    string recievedData = gameServer.RecieveData(stream);
-                    Console.WriteLine($"{client.Client.RemoteEndPoint} > {recievedData}");
-                    gameServer.SendMessage(recievedData, stream);
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine($"{client.Client.RemoteEndPoint} DISCONNECTED");
-                    break;
-                }
-            }
-        }
+       
 
         // TODO: SOFIE Make Code for Connecting Player To Chat Service
         public void ConnectPlayerToChatService()

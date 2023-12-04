@@ -137,7 +137,7 @@ namespace GameServer.Client_Facing
             ShotMessage? shot = null;
             while (TurnTimer.TotalSeconds>0 && TurnTimer!=TimeSpan.Zero)  
             {
-                shot = CurrentPlayersTurn.LatestShotMessage;
+                shot = CurrentPlayersTurn.ClientMessageHandler.LatestShotMessage;
                 if (shot != null)
                     return shot;
                 else

@@ -37,13 +37,17 @@ namespace GameTest
             game.GivePlayersDefaultGameBoards();
             Testing.IsTesting = true;
         }
-
+        [Test]
+        public void Test_ShotHandler_Setup()
+        {
+            Assert.Pass();
+        }
         #region - HandleShot Tests
         [Test]
         public void Test_ShotHandler_HandleShot_Invalid()
         {
-            var sm = new ShotMessage() { X = 100, Y = 42 };
-            var feedback=ShotHandler.HandleShot(ref p2,ref p1, sm);
+            ShotMessage sm = new ShotMessage() { X = 100, Y = 42 };
+            ShotFeedback feedback=ShotHandler.HandleShot(ref p2,ref p1, sm);
 
             Assert.Multiple(() =>
             {
@@ -55,7 +59,7 @@ namespace GameTest
         [Test]
         public void Test_ShotHandler_HandleShot_Valid_Hit()
         {
-            var sm = SM_Hit_P1_Default;
+            ShotMessage sm = SM_Hit_P1_Default;
            
 
             bool expectValid = true;
@@ -63,7 +67,7 @@ namespace GameTest
             Player.Attack expectAttack = Player.Attack.Hit;
             Player.Defence expectDefence = Player.Defence.HitShip;
 
-            var feedback = ShotHandler.HandleShot(ref p2,ref p1, sm);
+            ShotFeedback feedback = ShotHandler.HandleShot(ref p2,ref p1, sm);
 
             Assert.Multiple(() =>
             {
@@ -80,7 +84,7 @@ namespace GameTest
         public void Test_ShotHandler_HandleShot_Valid_Miss()
         {
 
-            var sm =SM_Misses_P1_Default;
+            ShotMessage sm =SM_Misses_P1_Default;
            
 
             bool expectValid = true;
@@ -88,7 +92,7 @@ namespace GameTest
             Player.Attack expectAttack = Player.Attack.Miss;
             Player.Defence? expectDefence = null;
 
-            var feedback = ShotHandler.HandleShot(ref p2,ref p1, sm);
+            ShotFeedback feedback = ShotHandler.HandleShot(ref p2,ref p1, sm);
 
             Assert.Multiple(() =>
             {
@@ -103,9 +107,9 @@ namespace GameTest
         [Test]
         public void Test_ShotHandler_DecodeShot()
         {
-            var sm=new ShotMessage() { X = 5, Y = 7 };
+            ShotMessage sm=new ShotMessage() { X = 5, Y = 7 };
             Vector2 expect = new Vector2(5, 7);
-            var result = ShotHandler.DecodeShot(sm);
+            Vector2 result = ShotHandler.DecodeShot(sm);
 
             Assert.That(result, Is.EqualTo(expect));
             
@@ -115,9 +119,9 @@ namespace GameTest
         [Test]
         public void Test_ShotHandler_CheckIfShotIsInsideBounds_True_X5Y5()
         {
-            var minimum = new Vector2(0, 0);
-            var middle = Valid_Shot; //5,5
-            var maximum = new Vector2(9, 9);
+            Vector2 minimum = new Vector2(0, 0);
+            Vector2 middle = Valid_Shot; //5,5
+            Vector2 maximum = new Vector2(9, 9);
 
             Assert.Multiple(() =>
             {
@@ -130,9 +134,9 @@ namespace GameTest
         [Test]
         public void Test_ShotHandler_CheckIfShotIsInsideBounds_False()
         {
-            var closestToMinimum = new Vector2(-1, -1);
-            var extreme = Invalid_Shot; //100,42
-            var closestToMaximum = new Vector2(10, 10);
+            Vector2 closestToMinimum = new Vector2(-1, -1);
+            Vector2 extreme = Invalid_Shot; //100,42
+            Vector2 closestToMaximum = new Vector2(10, 10);
 
             Assert.Multiple(() =>
             {
@@ -190,8 +194,8 @@ namespace GameTest
             Player.Defence dr = Player.Defence.HitShip;
             ShotHandler.ApplyHitToPlayers(shot, ref a, ar,ref d, dr);
 
-            var expectA =(byte)ar;
-            var expectD = (byte)dr;
+            byte expectA =(byte)ar;
+            byte expectD = (byte)dr;
 
             Assert.Multiple(() =>
             {
@@ -212,8 +216,8 @@ namespace GameTest
             Player.Defence? dr = null;
             ShotHandler.ApplyHitToPlayers(shot, ref a, ar,ref d, dr);
 
-            var expectA = (byte)ar;
-            var expectD = (byte)Player.Defence.Empty;
+            byte expectA = (byte)ar;
+            byte expectD = (byte)Player.Defence.Empty;
 
             Assert.Multiple(() =>
             {
@@ -232,8 +236,8 @@ namespace GameTest
             (Player.Attack ar, Player.Defence? dr) =ShotHandler.SeeIfAttackHits(shot, d);
             ShotHandler.ApplyHitToPlayers(shot, ref a, ar, ref d, dr);
 
-            var expectA = (byte)ar;
-            var expectD = (byte)dr;
+            byte expectA = (byte)ar;
+            byte? expectD = (byte?)dr;
 
             Assert.Multiple(() =>
             {
@@ -252,8 +256,8 @@ namespace GameTest
             (Player.Attack ar, Player.Defence? dr) = ShotHandler.SeeIfAttackHits(shot, d);
             ShotHandler.ApplyHitToPlayers(shot, ref a, ar, ref d, dr);
 
-            var expectA = (byte)ar;
-            var expectD = (byte)Player.Defence.Empty;
+            byte expectA = (byte)ar;
+            byte expectD = (byte)Player.Defence.Empty;
 
             Assert.Multiple(() =>
             {
