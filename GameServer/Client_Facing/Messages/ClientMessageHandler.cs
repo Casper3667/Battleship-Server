@@ -171,6 +171,7 @@ namespace GameServer.Client_Facing.Messages
         }
 
         Mutex chatMessageMutex = new Mutex();
+        
         public Queue<RawChatMessageFromClient> ChatMessages { get; private set; } = new();
 
         public void HandleChatMessage(RawChatMessageFromClient rawChatMessageFromClient)
@@ -183,7 +184,7 @@ namespace GameServer.Client_Facing.Messages
             ChatMessages.Enqueue(message);
             chatMessageMutex.ReleaseMutex();
         }
-
+        // TODO: SOFIE Make Code to Take Use this MEthod to Get Messages from queue and process them
         public RawChatMessageFromClient GetChatMessageFromQueue()
         {
             chatMessageMutex.WaitOne();
