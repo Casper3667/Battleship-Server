@@ -120,7 +120,22 @@ namespace GameServer.Client_Facing
             
             gameServer.AddPlayer(this);
             StartupProcedure();
+
+            Thread handlePlayerThread = new(HandlePlayer) { IsBackground= true };
+            handlePlayerThread.Start();
+            
         }
+        public void HandlePlayer()
+        {
+            while (client.Connected)
+            {
+                Thread.Sleep(5000); // checks if still Connected Every 5 seconds
+            }
+            Print("Left Server");
+
+            gameServer.RemovePlayer(this);
+        }
+
         public void StartupProcedure() {
             stream = client.GetStream();
 
@@ -143,6 +158,7 @@ namespace GameServer.Client_Facing
         // TODO: SOFIE Make Send Startup Message Code
         public void SendStartupMessage()
         {
+            Print("Sending Startup Message");   
             /// USE PLAYER AND STREAM
             /// 
             var message = new StartupMessage(
@@ -151,17 +167,21 @@ namespace GameServer.Client_Facing
                 gameServer.GetOtherPlayerUsername(this));
 
             string data=gameServer.SerializeMessage(message);
-            gameServer.SendMessage(data, stream);
+            gameServer.SendMessageLine(data, stream);
         }
 
         public void SendRawGameStateMessage(RawGameStateMessage message)
         {
             string data = gameServer.SerializeMessage(message);
-            gameServer.SendMessage(data, stream);
+            gameServer.SendMessageLine(data, stream);
         }
         #endregion
 
 
+        public void Print(string message)
+        {
+            Console.WriteLine($"[{Username}]:" + message);
+        }
     }
     
 }
