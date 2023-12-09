@@ -35,6 +35,7 @@ namespace GameServer.Client_Facing
         {
             GameRunning= true;
             GivePlayersDefaultGameBoards();
+            //TEST_GivePlayer1CustomGameBoard();
             CurrentPlayersTurn = Player1;
             LastAction = $"Game Started"/*+$" The First Turn Goes To: {CurrentPlayersTurn.Username}"*/;
             SendPlayersCurrentGameState(false);
@@ -240,6 +241,7 @@ namespace GameServer.Client_Facing
             Players[1].AssignDefenceScreen(player2);
 
         }
+       
         
         public void ChangeCurrentPlayersTurn()
         {
@@ -311,9 +313,9 @@ namespace GameServer.Client_Facing
 
             bool firstnumber = true;
             StringBuilder sb = new StringBuilder();
-            for (int x = 0; x < xlength; x++)
+            for (int y = 0; y < ylength; y++)
             {
-                for (int y = 0; y < ylength; y++)
+                for (int x = 0; x < xlength; x++)
                 {
                     if (firstnumber)
                     {
@@ -332,7 +334,23 @@ namespace GameServer.Client_Facing
         }
         #endregion
 
+        #region TESTING
+        private void TEST_GivePlayer1CustomGameBoard()
+        {
+            var player1board = new byte[10, 10];
+            for(int y =0;  y < 10; y++)
+            {
+                for (int x = 0; x < 10; x++)
+                {
+                    player1board[x, y] = (byte)((x * 10) + y);
+                }
+            }
+            
 
+
+            GivePlayersGameBoards(player1board, Player2DefaultDefence);
+        }
+        #endregion
 
     }
 }
