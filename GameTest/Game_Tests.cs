@@ -57,8 +57,8 @@ namespace GameTest
         [Test]
         public void Test_Game_ConvertMultiArrayToString_Works()
         {
-            byte[,] input = new byte[,] { { 1, 2 }, { 0, 1 } };
-            string expect = "1,2,0,1";
+            byte[,] input = new byte[,] { { 1, 2 }, { 0, 3 } };
+            string expect = "1,0,2,3";
             string result = game.ConvertMultiArrayToString(input);
 
             Assert.That(result, Is.EqualTo(expect));
