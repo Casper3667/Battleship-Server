@@ -230,22 +230,33 @@ namespace GameServer.Client_Facing.Messages
 
         public void HandleChatMessage(RawChatMessageFromClient rawChatMessageFromClient)
         {
-            AddChatMessageToQueue(rawChatMessageFromClient);
+            //AddChatMessageToQueue(rawChatMessageFromClient);
+            try
+            {
+                player.ChatServiceInterface.ProcessChatMessageFromClient(rawChatMessageFromClient);
+            }
+            catch(Exception e)
+            {
+                player.Print("Couldnt Handle Chat Message: " + e);
+            }
+            
+
+            
         }
-        public void AddChatMessageToQueue(RawChatMessageFromClient message)
-        {
-            chatMessageMutex.WaitOne();
-            ChatMessages.Enqueue(message);
-            chatMessageMutex.ReleaseMutex();
-        }
-        // TODO: SOFIE Make Code to Take Use this MEthod to Get Messages from queue and process them
-        public RawChatMessageFromClient GetChatMessageFromQueue()
-        {
-            chatMessageMutex.WaitOne();
-            var message = ChatMessages.Dequeue();
-            chatMessageMutex.ReleaseMutex();
-            return message;
-        }
+        //public void AddChatMessageToQueue(RawChatMessageFromClient message)
+        //{
+        //    chatMessageMutex.WaitOne();
+        //    ChatMessages.Enqueue(message);
+        //    chatMessageMutex.ReleaseMutex();
+        //}
+        //// 
+        //public RawChatMessageFromClient GetChatMessageFromQueue()
+        //{
+        //    chatMessageMutex.WaitOne();
+        //    var message = ChatMessages.Dequeue();
+        //    chatMessageMutex.ReleaseMutex();
+        //    return message;
+        //}
 
 
 

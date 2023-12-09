@@ -1,4 +1,5 @@
-﻿using GameServer.Client_Facing.Messages;
+﻿using GameServer.Chat_ServiceFacing;
+using GameServer.Client_Facing.Messages;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -39,7 +40,7 @@ namespace GameServer.Client_Facing
         //bool IsLeading { get; set; }
 
         public ClientMessageHandler ClientMessageHandler { get; private set; }
-     
+        public ChatServiceInterface ChatServiceInterface { get; private set; }
 
 
         private JWT token;
@@ -148,14 +149,15 @@ namespace GameServer.Client_Facing
 
             SendStartupMessage();
             ClientMessageHandler.StartListeningForMessages(stream);
-            ConnectPlayerToChatService();
+            ConnectPlayerToChatService(stream);
         }
        
 
         // TODO: SOFIE Make Code for Connecting Player To Chat Service
-        public void ConnectPlayerToChatService()
+        public void ConnectPlayerToChatService(NetworkStream stream)
         {
-
+            ChatServiceInterface = new ChatServiceInterface(this,stream);
+            ChatServiceInterface.StartListeningToChatService();
         }
 
 
