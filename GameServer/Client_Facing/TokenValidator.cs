@@ -13,9 +13,12 @@ namespace GameServer.Client_Facing
         // TODO: SOFIE Insert Proper Code for Verifying JWT
         public static (bool verified, JWT? TokenData) DecodeAndVerifyJWT(string jwt)
         {
+            //return (true, new JWT("Sofie", DateTime.Now, DateTime.Now.AddDays(2)));
+
             Console.WriteLine("Validating this Token: " + jwt);
             //var JWT = new JWT("Username",DateTime.Now,DateTime.Now.AddDays(2));
             (bool isValid,JWT? JWT)=ValidateJwt(jwt,key);
+            
             return (isValid, JWT);
         }
         /// <summary>
