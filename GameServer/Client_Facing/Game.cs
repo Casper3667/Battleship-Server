@@ -21,6 +21,33 @@ namespace GameServer.Client_Facing
 
         public byte[,] Player1DefaultDefence { get; private set; } = new byte[,] { { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 0, 0, 0, 0, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 0, 0, 0, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 0, 0, 0, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 0, 0, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
         public byte[,] Player2DefaultDefence { get; private set; } = new byte[,] { { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 }, { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 }, { 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 }, { 0, 1, 0, 1, 1, 1, 1, 1, 1, 1 }, { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
+
+        public byte[,] Player1NewDefaultDefence { get; private set; } = new byte[,]
+        {
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 } };
+        public byte[,] Player2NewDefaultDefence { get; private set; } = new byte[,]
+        {
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 0, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 } };
+
+
         CancellationTokenSource cancellationSource;
 
         public string LastAction { get; private set; }     
@@ -34,7 +61,8 @@ namespace GameServer.Client_Facing
         public void StartGame()
         {
             GameRunning= true;
-            GivePlayersDefaultGameBoards();
+            //GivePlayersDefaultGameBoards();
+            GivePlayersNewDefaultGameBoards();
             //TEST_GivePlayer1CustomGameBoard();
             CurrentPlayersTurn = Player1;
             LastAction = $"Game Started"/*+$" The First Turn Goes To: {CurrentPlayersTurn.Username}"*/;
@@ -234,6 +262,10 @@ namespace GameServer.Client_Facing
         public void GivePlayersDefaultGameBoards()
         {
             GivePlayersGameBoards(Player1DefaultDefence, Player2DefaultDefence);
+        }
+        public void GivePlayersNewDefaultGameBoards()
+        {
+            GivePlayersGameBoards(Player1NewDefaultDefence, Player2NewDefaultDefence);
         }
         public void GivePlayersGameBoards(byte[,] player1, byte[,]player2)
         {
