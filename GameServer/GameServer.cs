@@ -62,7 +62,7 @@ namespace GameServer
         {
             running = true;
             server.Start();
-            Console.WriteLine("SERVER STARTED. Listening on Port: " + port);
+            Print("SERVER STARTED. Listening on Port: " + port);
             source = new CancellationTokenSource();
             cancellationToken = source.Token;
             ServerThread.Start();
@@ -72,23 +72,29 @@ namespace GameServer
         }
         public void Stop()
         {
+            Print("Stopping Game Server");
             running = false;
             server.Stop();
             ServerThread.Abort();
             source.Cancel();
+
+            Print("Clearing Lists");
+            NotVerifiedClients.Clear();
+            Players.Clear();
             //acceptClientThread.Abort();
 
         }
+        
 
         private void AcceptNewClients(TcpListener server)
         {
             while (running)
             {
-                Console.WriteLine("Server is Checkig if it Needs More Clients\nPlayer Count: "+PlayerCount);
+                Print("Server is Checking if it Needs More Clients\nPlayer Count: "+PlayerCount);
                 
                 if (PlayerCount < maxPlayers)
                 {
-                    Console.WriteLine("Server Is Accepting New Clients");
+                    Print("Server Is Accepting New Clients");
                     //ValueTask<TcpClient> temp = server.AcceptTcpClientAsync(cancellationToken);
                     TcpClient temp=server.AcceptTcpClient();
 
@@ -96,7 +102,7 @@ namespace GameServer
                     {
                         TcpClient client = temp/*.Result*/;
                         AddTempClient(client);
-                        Console.WriteLine($"Client {client.Client.RemoteEndPoint} Connected");
+                        Print($"Client {client.Client.RemoteEndPoint} Connected");
                         Thread t = new Thread(() => VerifyClient(client));
                         t.IsBackground = true;
                         t.Start();
@@ -109,7 +115,7 @@ namespace GameServer
                 }
                 else if (Players.Count == maxPlayers) 
                 {
-                    Console.WriteLine("Server is Starting Game");
+                    Print("Starting Game");
                     StartGame();
                 }
 
@@ -136,10 +142,10 @@ namespace GameServer
             {
                 if(gameCancellationSource.IsCancellationRequested)
                 {
-                    Console.WriteLine("Game Was Cancelled");
+                    Print("Game Was Cancelled");
                 }
                 else
-                    Console.WriteLine("GameServer_Tried and Failed to Start the Game");
+                    Print("GameServer_Tried and Failed to Start the Game");
                 
                 //throw;
             }
@@ -169,9 +175,11 @@ namespace GameServer
         {
             if (Players.Contains(player) == false)
             {
+                   
                 playersMutex.WaitOne();
                 Players.Add(player);
                 playersMutex.ReleaseMutex();
+                Print($"Added [{player.Username}] To List of Players");
             }
             else
                 Console.WriteLine("Game Server Tried to Add Player That was Already Regisered");
@@ -189,14 +197,14 @@ namespace GameServer
             }
 
             gameCancellationSource.Cancel(); // TODO: SOFIE Might want to move this cancellation
-            Console.WriteLine($"Server Removed [{player.Username}] ");
+            Print($"Removed [{player.Username}] From List of Players");
 
         }
         private void VerifyClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
             StreamWriter writer = new(stream);
-            Console.WriteLine("Verifing Client");
+            Print("Verifing Client");
             Player? player=null;
             try
             {
@@ -209,13 +217,13 @@ namespace GameServer
                         
                         player = new Player(((JWT)token).Username, client, this, token);
 
-                        Console.WriteLine(client.Client.RemoteEndPoint + "Accepted and will from now on be referred to as: " + player.Username);
+                        Print(client.Client.RemoteEndPoint + "Accepted and will from now on be referred to as: " + player.Username);
                         player.StartHandeling();
                     }
                     else
                     {
                         Debug.Fail("Token is Valid, but for some reason it wasnt returned");
-                        Console.WriteLine("Token is Valid, but for some reason it wasnt returned");
+                        Print("Token is Valid, but for some reason it wasnt returned");
                         writer.WriteLine("");
                         writer.Flush();
                     }
@@ -233,16 +241,16 @@ namespace GameServer
             }
             catch (Exception)
             {
-                Console.WriteLine($"{client.Client.RemoteEndPoint} Was Not Verified");
+                Print($"{client.Client.RemoteEndPoint} Was Not Verified");
                 writer.WriteLine("");
                 writer.Flush();
             }
             if(player!=null)
             {
-                Console.WriteLine($"Remowing [{player.Username}] From Temp List");
+                Print($"Removing [{player.Username}] From Temp List");
             }
             else
-                Console.WriteLine("Remowing Client From Temp List");
+                Print("Removing Client From Temp List");
             RemoveTempClient(client);
         }
         private string ListenForJWT(NetworkStream stream)
@@ -327,6 +335,10 @@ namespace GameServer
         }
 
         #endregion
+        private void Print(string message)
+        {
+            Console.WriteLine("[GameServer]: "+message);
+        }
 
     }
 

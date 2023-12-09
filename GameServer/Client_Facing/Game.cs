@@ -118,6 +118,12 @@ namespace GameServer.Client_Facing
                     ChangeCurrentPlayersTurn();
                     SendPlayersCurrentGameState(false);
                 }
+                else
+                {
+                    //Cancel Game Code
+                    SendPlayersGameCancelledGameState(true);
+                    GameRunning= false;
+                }
             }
             
             
@@ -167,7 +173,7 @@ namespace GameServer.Client_Facing
         {
             TimeSpan TurnTimer = MaxTurnTime;
             ShotMessage? shot = null;
-            (int x, int y) = Console.GetCursorPosition();
+            //(int x, int y) = Console.GetCursorPosition();
             while (TurnTimer.TotalSeconds>0 && TurnTimer!=TimeSpan.Zero)  
             {
                 shot = CurrentPlayersTurn.ClientMessageHandler.LatestShotMessage;
@@ -177,11 +183,11 @@ namespace GameServer.Client_Facing
                 {
                     Thread.Sleep(100);
                     TurnTimer=TurnTimer.Subtract(TimeSpan.FromMilliseconds(100));
-                    Console.SetCursorPosition(x, y);
-                    Console.WriteLine("Game TurnTimer: " + TurnTimer.TotalSeconds.ToString());
+                    //Console.SetCursorPosition(x, y);
+                    //Console.WriteLine("Game TurnTimer: " + TurnTimer.TotalSeconds.ToString());
                     if (cancellationSource.IsCancellationRequested)
                     {
-                        Console.WriteLine("Game Is Cancelled so Turn Has Ended");
+                        Print("Game Is Cancelled so Turn Has Ended");
                         return null;
                     }
                 }
@@ -285,7 +291,7 @@ namespace GameServer.Client_Facing
                     CurrentPlayersTurn = Player1;
             }
             else
-                Console.WriteLine("Couldnt Change Player Since Game Is Cancelled");
+                Print("Couldnt Change Player Since Game Is Cancelled");
         }
 
         public Player GetOtherPlayer(Player player)
@@ -294,7 +300,7 @@ namespace GameServer.Client_Facing
             else if (player == Player2) return Player1;
             else
             {
-                Console.WriteLine("Error: For Some reaon a non existing player was given");
+                Print("Error: For Some reaon a non existing player was given");
                 return player;
             }
 
@@ -310,6 +316,24 @@ namespace GameServer.Client_Facing
             }
 
         }
+        private void SendPlayersGameCancelledGameState(bool HasBeenWon)
+        {
+            LastAction = "Since Your Opponent Left The Game You have Automatically WON!!!";
+
+
+            foreach (var player in Players)
+            {
+                if(player.client.Connected)
+                {
+                    player.ResetScreens();
+                    CurrentLeader = player;
+                    player.SendRawGameStateMessage(WriteGameStateMessage(player, HasBeenWon));
+                }
+                
+
+            }
+
+        }
         public RawGameStateMessage WriteGameStateMessage(Player player, bool HasBeenWon)
         {
             string turnname="";
@@ -319,10 +343,23 @@ namespace GameServer.Client_Facing
             }
             else
                 turnname = "Your Opponents";
-            string feedback = LastAction + $"[Its {turnname} Turn]";
+
+            string feedback = LastAction;
+            if(HasBeenWon==false)
+                feedback = feedback+ $"[Its {turnname} Turn]";
+
+            string? tempopponent = Server.GetOtherPlayerUsername(player);
+            string opponent;
+            if (tempopponent != null)
+            {
+                opponent = (string)tempopponent;
+            }
+            else
+                opponent = "GONE";
+
             var message = new RawGameStateMessage
                 (
-                Server.GetOtherPlayerUsername(player),
+                opponent,
                 feedback,
                 ConvertMultiArrayToString(player.AttackScreen),
                 ConvertMultiArrayToString(player.DefenceScreen),
@@ -383,6 +420,11 @@ namespace GameServer.Client_Facing
             GivePlayersGameBoards(player1board, Player2DefaultDefence);
         }
         #endregion
+
+        void Print(string message)
+        {
+            Console.WriteLine("[Game]: "+message);
+        }
 
     }
 }
