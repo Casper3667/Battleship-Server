@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using System.Net;
 
 namespace GameServer
 {
     public class Program
     {
+        public static GameServer Server { get; private set; }
         public static void Main(string[] args)
         {
             Console.WriteLine("Booting up");
+            Server = new GameServer(IPAddress.Any, 13000, 2, false);
+            Server.Start();
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

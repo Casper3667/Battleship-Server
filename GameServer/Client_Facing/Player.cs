@@ -43,7 +43,7 @@ namespace GameServer.Client_Facing
 
 
         private JWT token;
-        private TcpClient client;
+        public TcpClient client { get; private set; }
         public  GameServer gameServer { get; private set; }
 
         private NetworkStream stream;
@@ -58,7 +58,7 @@ namespace GameServer.Client_Facing
         public Player(string username, TcpClient client,GameServer server,JWT token)
         {
             this.client = client;
-            ClientMessageHandler = new(this, this.client);
+            ClientMessageHandler = new(this);
             Username = username;
             this.token = token;
             this.gameServer = server;
@@ -69,7 +69,7 @@ namespace GameServer.Client_Facing
         {
             this.client = client;
 
-            ClientMessageHandler = new(this, this.client);
+            ClientMessageHandler = new(this);
             Username = username;
             this.token=token;
             this.gameServer = server;
@@ -97,6 +97,13 @@ namespace GameServer.Client_Facing
             AttackScreen[(int)point.X, (int)point.Y] = (byte)value;
             Testing.Print($"[{point.X},{point.Y}] in Attack Screen is now: [{AttackScreen[(int)point.X, (int)point.Y]}]");
         }
+        public void ResetScreens()
+        {
+            Print("Resetting Attack And Defence Screen");
+            AttackScreen = new byte[AttackScreen.GetLength(0), AttackScreen.GetLength(1)];
+            DefenceScreen = new byte[DefenceScreen.GetLength(0), DefenceScreen.GetLength(1)];
+        }
+        
         public bool CheckIfShotHits(Vector2 shotAgainst)
         {
             switch (DefenceScreen[(int)shotAgainst.X,(int)shotAgainst.Y])
@@ -120,7 +127,22 @@ namespace GameServer.Client_Facing
             
             gameServer.AddPlayer(this);
             StartupProcedure();
+
+            Thread handlePlayerThread = new(HandlePlayer) { IsBackground= true };
+            handlePlayerThread.Start();
+            
         }
+        public void HandlePlayer()
+        {
+            while (client.Connected)
+            {
+                Thread.Sleep(5000); // checks if still Connected Every 5 seconds
+            }
+            Print("Left Server");
+
+            gameServer.RemovePlayer(this);
+        }
+
         public void StartupProcedure() {
             stream = client.GetStream();
 
@@ -143,6 +165,7 @@ namespace GameServer.Client_Facing
         // TODO: SOFIE Make Send Startup Message Code
         public void SendStartupMessage()
         {
+            Print("Sending Startup Message");   
             /// USE PLAYER AND STREAM
             /// 
             var message = new StartupMessage(
@@ -151,17 +174,22 @@ namespace GameServer.Client_Facing
                 gameServer.GetOtherPlayerUsername(this));
 
             string data=gameServer.SerializeMessage(message);
-            gameServer.SendMessage(data, stream);
+            gameServer.SendMessageLine(data, stream);
         }
 
         public void SendRawGameStateMessage(RawGameStateMessage message)
         {
             string data = gameServer.SerializeMessage(message);
-            gameServer.SendMessage(data, stream);
+            Print("Sending GameStateMessage:\n" + data);
+            gameServer.SendMessageLine(data, stream);
         }
         #endregion
 
 
+        public void Print(string message)
+        {
+            Console.WriteLine($"[Player:{Username}]:" + message);
+        }
     }
     
 }

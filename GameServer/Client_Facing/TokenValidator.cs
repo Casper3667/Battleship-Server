@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -12,9 +13,13 @@ namespace GameServer.Client_Facing
         // TODO: SOFIE Insert Proper Code for Verifying JWT
         public static (bool verified, JWT? TokenData) DecodeAndVerifyJWT(string jwt)
         {
-            var JWT = new JWT("Username",DateTime.Now,DateTime.Now.AddDays(2));
-            ValidateJwt(jwt,key);
-            return (true, JWT);
+            //return (true, new JWT("Sofie", DateTime.Now, DateTime.Now.AddDays(2)));
+
+            Console.WriteLine("Validating this Token: " + jwt);
+            //var JWT = new JWT("Username",DateTime.Now,DateTime.Now.AddDays(2));
+            (bool isValid,JWT? JWT)=ValidateJwt(jwt,key);
+            
+            return (isValid, JWT);
         }
         /// <summary>
         /// Code taken DIRECTLY from Game Lobby, with only MINOR edits from Sofie
@@ -27,8 +32,8 @@ namespace GameServer.Client_Facing
         {
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var validationParameters = new TokenValidationParameters
+                JwtSecurityTokenHandler tokenHandler = new();
+                TokenValidationParameters validationParameters = new()
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
@@ -40,8 +45,12 @@ namespace GameServer.Client_Facing
                 };
 
                 // Validate the JWT
-                tokenHandler.ValidateToken(jwtToken, validationParameters, out var validatedToken);
-                var t = new JWT(validatedToken.Id, validatedToken.ValidFrom, validatedToken.ValidTo); // Added By Sofie
+                tokenHandler.ValidateToken(jwtToken, validationParameters, out SecurityToken validatedToken);
+                Console.WriteLine("Token Validation> Doing Code By Sofie");
+                var temp = tokenHandler.ReadJwtToken(jwtToken);
+                string name=temp.Claims.First().Value;
+                Console.WriteLine($"Got Username Out of Token: [{name}]");
+                 var t = new JWT(name, validatedToken.ValidFrom, validatedToken.ValidTo); // Added By Sofie
                 return (true,t); // If the validation is successful
             }
             catch (Exception ex)

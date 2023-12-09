@@ -13,9 +13,13 @@ public class ServerHealth : ControllerBase
     {
         _logger = logger;
     }
-    public ServerHealth()
-    {
-    }
+    /// <summary>
+    /// This Code Caused Program to Fail
+    /// </summary>
+    /// <returns></returns>
+    //public ServerHealth()
+    //{
+    //}
 
     [HttpGet(Name = "status")]
     public int Get()

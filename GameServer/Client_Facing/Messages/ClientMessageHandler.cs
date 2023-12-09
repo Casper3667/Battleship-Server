@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Sockets;
 using System.Security.AccessControl;
 using System.Text;
@@ -44,10 +45,10 @@ namespace GameServer.Client_Facing.Messages
         
         
         
-        public ClientMessageHandler(Player _player, TcpClient _client) 
+        public ClientMessageHandler(Player _player) 
         {
             player= _player;
-            client= _client;
+            client= player.client;
 
             //LatestShotMessage = null;
         }
@@ -56,44 +57,97 @@ namespace GameServer.Client_Facing.Messages
         
         public void StartListeningForMessages(NetworkStream stream)
         {
+            player.Print("Setting Up Listening Loop");
             this.stream = stream;
-            listenToClientThread = new Thread(() => RecieveDataFromClient(stream)) { IsBackground = true };
+            //stream = client.GetStream();
+            listenToClientThread = new Thread(() => RecieveDataLinesFromClient(stream)) { IsBackground = true };
             listenToClientThread.Start();
 
         }
         // TODO: SOFIE This Needs A Test with half Mock Client 
         public void RecieveDataFromClient(NetworkStream stream)
         {
-            while (client.Connected)
+            throw new Exception("We dont Want to Recieve Messages like this");
+            try
             {
-                StringBuilder sb = new StringBuilder();
-                byte[] tempBytes = new byte[1];
-                while (true && client.Connected)
+                while (client.Connected)
                 {
-                    int bytesRead = stream.Read(tempBytes);
-                    if (bytesRead == 0) { break; }
-                    string recievedData = Encoding.UTF8.GetString(tempBytes);
-                    if (player.gameServer.useEndMessage)
+                    StringBuilder sb = new StringBuilder();
+                    byte[] tempBytes = new byte[1];
+                    while (true && client.Connected)
                     {
-                        if (recievedData.Contains(GameServer.END_OF_MESSAGE)) { break; }
-                        sb.Append(recievedData);
+                        int bytesRead = stream.Read(tempBytes);
+                        if (bytesRead == 0) { break; }
+                        string recievedData = Encoding.UTF8.GetString(tempBytes);
+                        if (player.gameServer.useEndMessage)
+                        {
+                            if (recievedData.Contains(GameServer.END_OF_MESSAGE)) { break; }
+                            sb.Append(recievedData);
+                        }
+                        else
+                        {
+                            sb.Append(recievedData);
+                            break;
+                        }
+
+
+                    }
+                    string message = sb.ToString();
+
+                    SortClientMessage(message);
+                }
+            }
+            catch (Exception e)
+            {
+                player.Print("Error Occured when Listening for MEssages:\n"+e);
+                //throw;
+            }
+            
+
+
+        }
+        public void RecieveDataLinesFromClient(NetworkStream stream)
+        {
+            try
+            {
+                StreamReader reader = new(stream);
+
+                //string message = reader.ReadLine() ?? "";
+                //return message;
+                
+                while (client.Connected)
+                {
+                    player.Print("Listening For Message");
+                    //string message = reader.ReadLine() ?? "";
+                    string? message = reader.ReadLine();
+                    if(message!=null)
+                    {
+                        player.Print($"Got Message: [{message}]");
+                        SortClientMessage(message);
                     }
                     else
                     {
-                        sb.Append(recievedData);
-                        break;
+                        player.Print("WARNING: Player got an null message We assume this Means the Player Has Disconnected and reflect that by disconnecting client");
+                        client.Close();
                     }
-
-
+                       
+                    
                 }
-                string message = sb.ToString();
-                SortClientMessage(message);
+                player.Print("Listen For Message Loop Broken");
             }
+            catch (Exception e)
+            {
+                player.Print("Error Occured when Listening for MEssages:\n" + e);
+                //throw;
+            }
+            
 
 
         }
         public string SortClientMessage(string message)
         {
+            player.Print("Sorting Message: " + message);
+            player.Print("Client Is Connected: " + client.Connected);
             string returnString = "";
             IClientMessage? temp=null;
             Testing.Print("[ClientMessageHandler]SortClientMessage> Deserializing into Shot Message");
@@ -171,6 +225,7 @@ namespace GameServer.Client_Facing.Messages
         }
 
         Mutex chatMessageMutex = new Mutex();
+        
         public Queue<RawChatMessageFromClient> ChatMessages { get; private set; } = new();
 
         public void HandleChatMessage(RawChatMessageFromClient rawChatMessageFromClient)
@@ -183,7 +238,7 @@ namespace GameServer.Client_Facing.Messages
             ChatMessages.Enqueue(message);
             chatMessageMutex.ReleaseMutex();
         }
-
+        // TODO: SOFIE Make Code to Take Use this MEthod to Get Messages from queue and process them
         public RawChatMessageFromClient GetChatMessageFromQueue()
         {
             chatMessageMutex.WaitOne();

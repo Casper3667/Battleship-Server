@@ -19,5 +19,6 @@ RUN dotnet publish "./GameServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 FROM base AS final
 WORKDIR /app
 EXPOSE 80
+EXPOSE 13000
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "GameServer.dll"]

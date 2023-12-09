@@ -3,13 +3,14 @@ using System.Net;
 using System.Text;
 using GameServer.Client_Facing;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace GameServer
 {
     public class GameServer
     {
         public const string END_OF_MESSAGE = "#END#";
-        public bool useEndMessage { get; private set; }
+        public bool useEndMessage { get; private set; } = true;
 
         public bool running { get; private set; } = false;
 
@@ -27,9 +28,12 @@ namespace GameServer
         public List<TcpClient> NotVerifiedClients = new List<TcpClient>();
         Mutex clientMutex;
         public List<Player> Players { get; private set; }
-        Mutex playersMutex;
+        Mutex playersMutex = new Mutex();
 
-        
+        public int PlayerCount { get 
+            {
+                return Players.Count + NotVerifiedClients.Count;
+            } }
 
         //Dictionary<TcpClient, Thread> clientThreads;
         CancellationTokenSource source;
@@ -58,6 +62,7 @@ namespace GameServer
         {
             running = true;
             server.Start();
+            Print("SERVER STARTED. Listening on Port: " + port);
             source = new CancellationTokenSource();
             cancellationToken = source.Token;
             ServerThread.Start();
@@ -67,28 +72,41 @@ namespace GameServer
         }
         public void Stop()
         {
+            Print("Stopping Game Server");
             running = false;
             server.Stop();
             ServerThread.Abort();
             source.Cancel();
+
+            Print("Clearing Lists");
+            NotVerifiedClients.Clear();
+            Players.Clear();
             //acceptClientThread.Abort();
 
         }
+        
 
         private void AcceptNewClients(TcpListener server)
         {
             while (running)
             {
-                if (Players.Count + NotVerifiedClients.Count < maxPlayers)
+                Print("Server is Checking if it Needs More Clients\nPlayer Count: "+PlayerCount);
+                
+                if (PlayerCount < maxPlayers)
                 {
-                    ValueTask<TcpClient> temp = server.AcceptTcpClientAsync(cancellationToken);
-                    if (temp.IsCompleted)
+                    Print("Server Is Accepting New Clients");
+                    //ValueTask<TcpClient> temp = server.AcceptTcpClientAsync(cancellationToken);
+                    TcpClient temp=server.AcceptTcpClient();
+
+                    if (/*temp.IsCompleted*/true)
                     {
-                        TcpClient client = temp.Result;
+                        TcpClient client = temp/*.Result*/;
+                        AddTempClient(client);
+                        Print($"Client {client.Client.RemoteEndPoint} Connected");
                         Thread t = new Thread(() => VerifyClient(client));
                         t.IsBackground = true;
                         t.Start();
-                        AddTempClient(client);
+                        
                         //AddClient(client, t);
 
                     }
@@ -97,8 +115,11 @@ namespace GameServer
                 }
                 else if (Players.Count == maxPlayers) 
                 {
+                    Print("Starting Game");
                     StartGame();
                 }
+
+                Thread.Sleep(1000);
 
             }
         }
@@ -119,9 +140,14 @@ namespace GameServer
             }
             catch (Exception)
             {
-                Console.WriteLine("GameServer_Tried and Failed to Start the Game");
-
-                throw;
+                if(gameCancellationSource.IsCancellationRequested)
+                {
+                    Print("Game Was Cancelled");
+                }
+                else
+                    Print("GameServer_Tried and Failed to Start the Game");
+                
+                //throw;
             }
             
 
@@ -149,14 +175,16 @@ namespace GameServer
         {
             if (Players.Contains(player) == false)
             {
+                   
                 playersMutex.WaitOne();
                 Players.Add(player);
                 playersMutex.ReleaseMutex();
+                Print($"Added [{player.Username}] To List of Players");
             }
             else
                 Console.WriteLine("Game Server Tried to Add Player That was Already Regisered");
         }
-        private void RemovePlayer(Player player)
+        internal void RemovePlayer(Player player)
         {
 
             playersMutex.WaitOne();
@@ -169,22 +197,43 @@ namespace GameServer
             }
 
             gameCancellationSource.Cancel(); // TODO: SOFIE Might want to move this cancellation
-            
+            Print($"Removed [{player.Username}] From List of Players");
+
         }
         private void VerifyClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
-
-            
-
+            StreamWriter writer = new(stream);
+            Print("Verifing Client");
+            Player? player=null;
             try
             {
-                (bool valid, JWT token)=TokenValidator.DecodeAndVerifyJWT(ListenForJWT(stream));
+
+                (bool valid, JWT? token)=TokenValidator.DecodeAndVerifyJWT(ListenForJWT(stream));
                 if(valid)
                 {
-                    var player = new Player(token.Username, client,this, token);
-                    player.StartHandeling();
+                    if(token != null)
+                    {
+                        
+                        player = new Player(((JWT)token).Username, client, this, token);
+
+                        Print(client.Client.RemoteEndPoint + "Accepted and will from now on be referred to as: " + player.Username);
+                        player.StartHandeling();
+                    }
+                    else
+                    {
+                        Debug.Fail("Token is Valid, but for some reason it wasnt returned");
+                        Print("Token is Valid, but for some reason it wasnt returned");
+                        writer.WriteLine("");
+                        writer.Flush();
+                    }
                     
+                    
+                }
+                else
+                {
+                    writer.WriteLine("");
+                    writer.Flush();
                 }
                 // string recievedData = RecieveData(stream);
                 //Console.WriteLine($"{client.Client.RemoteEndPoint} > {recievedData}");
@@ -192,21 +241,31 @@ namespace GameServer
             }
             catch (Exception)
             {
-                Console.WriteLine($"{client.Client.RemoteEndPoint} Was Not Verified");
-
+                Print($"{client.Client.RemoteEndPoint} Was Not Verified");
+                writer.WriteLine("");
+                writer.Flush();
             }
-
+            if(player!=null)
+            {
+                Print($"Removing [{player.Username}] From Temp List");
+            }
+            else
+                Print("Removing Client From Temp List");
             RemoveTempClient(client);
         }
         private string ListenForJWT(NetworkStream stream)
         {
-            return RecieveData(stream);
+            //string message= RecieveData(stream);
+            string message= RecieveDataLine(stream);
+            Console.WriteLine("Recieved JWT: " + message);
+            return message;
         }
 
         
 
         internal string RecieveData(NetworkStream stream)
         {
+            throw new Exception("We dont Want to Recieve Messages like this");
             StringBuilder sb = new StringBuilder();
             byte[] tempBytes = new byte[1];
             while (true)
@@ -229,8 +288,25 @@ namespace GameServer
             }
             return sb.ToString();
         }
+        internal string RecieveDataLine(NetworkStream stream)
+        {
+            StreamReader reader = new(stream);
+
+            string message = reader.ReadLine() ?? "";
+            return message;
+        }
+        internal void SendMessageLine(string msg, NetworkStream stream)
+        {
+            //Byte[] data = Encoding.UTF8.GetBytes((useEndMessage) ? msg + END_OF_MESSAGE : msg);
+            StreamWriter writer = new(stream);
+            writer.WriteLine(msg);
+            writer.Flush();
+            //stream.Write(data, 0, data.Length);
+        }
+
         internal void SendMessage(string msg, NetworkStream stream)
         {
+            throw new Exception("We dont Want to Send Messages like this");
             Byte[] data = Encoding.UTF8.GetBytes((useEndMessage) ? msg + END_OF_MESSAGE : msg);
             stream.Write(data, 0, data.Length);
         }
@@ -259,6 +335,10 @@ namespace GameServer
         }
 
         #endregion
+        private void Print(string message)
+        {
+            Console.WriteLine("[GameServer]: "+message);
+        }
 
     }
 
