@@ -26,7 +26,7 @@ namespace GameTest
         public void Setup()
         {
             Testing.IsTesting = true;
-            GameServer.GameServer server = new(IPAddress.Any, 000, 2);
+            GameServer.GameServer server = new(IPAddress.Any, 000, "Main_Lobby", 2);
             Player player = new Player("player 1", new System.Net.Sockets.TcpClient(), server, new JWT("player 1", DateTime.Now, DateTime.Now.AddDays(2)));
 
             handler = player.ClientMessageHandler;
