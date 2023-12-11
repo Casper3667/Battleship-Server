@@ -78,7 +78,8 @@ namespace GameServer.Chat_ServiceFacing
                 if (IP != null)
                 {
                     GameServer server = player.gameServer;
-                    string serverkey = server.address + ":" + server.port;
+                    // string serverkey = server.address + ":" + server.port;
+                    string serverkey = server.server.LocalEndpoint+"";
                     List<string> pkeys = new List<string>() { player.Username, serverkey };
                     Consumer.HandleMessageDelegate handler = HandleClientMessageFromService;
                     PrivateChatThread = new(() => Consumer.ListenToChat(this, IP, Producer.ChatGroup.Private, pkeys, handler)) { IsBackground = true };
@@ -186,7 +187,8 @@ namespace GameServer.Chat_ServiceFacing
                 {
                     Print("Sending Private Message To Chat Service: "+message);
                     GameServer server = player.gameServer;
-                    string key =server.address + ":" + server.port;
+                    //string key =server.address + ":" + server.port;
+                    string key = server.server.LocalEndpoint + "";
                     Producer.ConnectToChatServiceAndSend(IP, Producer.ChatGroup.Private, key,message);
                     PrintSend(Producer.ChatGroup.Private, key, message);
                 }

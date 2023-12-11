@@ -20,7 +20,7 @@ namespace GameServer
         public string LobbyID { get; private set; }
 
 
-        TcpListener server;
+        public TcpListener server { get; private set; }
         public Thread ServerThread { get; private set; }
         private Thread acceptClientThread;
         //List<TcpClient> clients;
