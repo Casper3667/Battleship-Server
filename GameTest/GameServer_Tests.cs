@@ -17,7 +17,7 @@ namespace GameTest
         [SetUp]
         public void Setup()
         {
-            GS = new GameServer.GameServer(IPAddress.Any,000,2);
+            GS = new GameServer.GameServer(IPAddress.Any,000, "Main_Lobby", 2);
         }
         [Test]
         public void Test_GameServer_Setup()

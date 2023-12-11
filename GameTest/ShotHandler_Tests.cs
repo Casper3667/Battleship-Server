@@ -29,7 +29,7 @@ namespace GameTest
         [SetUp]
         public void Setup()
         {
-            GameServer.GameServer server = new(IPAddress.Any, 000, 2);
+            GameServer.GameServer server = new(IPAddress.Any, 000, "Main_Lobby", 2);
             p1 = new Player("player 1", new System.Net.Sockets.TcpClient(), server, new JWT("player 1", DateTime.Now, DateTime.Now.AddDays(2)));
             p2 = new Player("player 2", new System.Net.Sockets.TcpClient(), server, new JWT("player 2", DateTime.Now, DateTime.Now.AddDays(2)));
             List<Player> players = new List<Player>() { p1, p2 };

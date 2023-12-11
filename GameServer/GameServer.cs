@@ -4,6 +4,7 @@ using System.Text;
 using GameServer.Client_Facing;
 using System.Text.Json;
 using System.Diagnostics;
+using GameServer.Chat_ServiceFacing;
 
 namespace GameServer
 {
@@ -14,9 +15,12 @@ namespace GameServer
 
         public bool running { get; private set; } = false;
 
-        private IPAddress address;
-        private int port;
-        TcpListener server;
+        public IPAddress address { get; private set; }
+        public int port { get; private set; }
+        public string LobbyID { get; private set; }
+
+
+        public TcpListener server { get; private set; }
         public Thread ServerThread { get; private set; }
         private Thread acceptClientThread;
         //List<TcpClient> clients;
@@ -38,11 +42,19 @@ namespace GameServer
         //Dictionary<TcpClient, Thread> clientThreads;
         CancellationTokenSource source;
         public CancellationToken cancellationToken {  get; private set; }
-
-        public GameServer(IPAddress _address, int _port, int _maxPlayers, bool _useEndMessage = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_address"></param>
+        /// <param name="_port"></param>
+        /// <param name="_lobbyID">For Chat Service, this determines what Group You are in</param>
+        /// <param name="_maxPlayers"></param>
+        /// <param name="_useEndMessage"></param>
+        public GameServer(IPAddress _address, int _port,string _lobbyID, int _maxPlayers, bool _useEndMessage = false)
         {
             this.address = _address;
             this.port = _port;
+            this.LobbyID = _lobbyID;
             this.maxPlayers = _maxPlayers;
             this.useEndMessage = _useEndMessage;
             server = new TcpListener(address, port);
@@ -171,6 +183,8 @@ namespace GameServer
             NotVerifiedClients.Remove(client);
             clientMutex.ReleaseMutex();
         }
+        
+        
         public void AddPlayer(Player player)
         {
             if (Players.Contains(player) == false)
@@ -180,6 +194,7 @@ namespace GameServer
                 Players.Add(player);
                 playersMutex.ReleaseMutex();
                 Print($"Added [{player.Username}] To List of Players");
+                ChatServiceInterface.SendPublicMessageToService($"{player.Username} Just Joined");
             }
             else
                 Console.WriteLine("Game Server Tried to Add Player That was Already Regisered");
@@ -198,7 +213,7 @@ namespace GameServer
 
             gameCancellationSource.Cancel(); // TODO: SOFIE Might want to move this cancellation
             Print($"Removed [{player.Username}] From List of Players");
-
+            ChatServiceInterface.SendPublicMessageToService($"{player.Username} Just Left");
         }
         private void VerifyClient(TcpClient client)
         {

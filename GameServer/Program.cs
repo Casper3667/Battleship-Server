@@ -9,7 +9,7 @@ namespace GameServer
         public static void Main(string[] args)
         {
             Console.WriteLine("Booting up");
-            Server = new GameServer(IPAddress.Any, 13000, 2, false);
+            Server = new GameServer(IPAddress.Any, 13000,"Main_Lobby", 2, false);
             Server.Start();
             var builder = WebApplication.CreateBuilder(args);
 

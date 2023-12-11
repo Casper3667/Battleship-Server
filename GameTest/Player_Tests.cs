@@ -20,7 +20,7 @@ namespace GameTest
         [SetUp]
         public void Setup()
         {
-            GameServer.GameServer server = new(IPAddress.Any, 000, 2);
+            GameServer.GameServer server = new(IPAddress.Any, 000, "Main_Lobby", 2);
             player =new Player("player 1", new System.Net.Sockets.TcpClient(), server, new JWT("player 1", DateTime.Now, DateTime.Now.AddDays(2)));
         }
         [Test]
