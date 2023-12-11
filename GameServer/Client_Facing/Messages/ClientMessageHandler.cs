@@ -45,10 +45,10 @@ namespace GameServer.Client_Facing.Messages
         
         
         
-        public ClientMessageHandler(Player _player, TcpClient _client) 
+        public ClientMessageHandler(Player _player) 
         {
             player= _player;
-            client= _client;
+            client= player.client;
 
             //LatestShotMessage = null;
         }
@@ -57,7 +57,9 @@ namespace GameServer.Client_Facing.Messages
         
         public void StartListeningForMessages(NetworkStream stream)
         {
+            player.Print("Setting Up Listening Loop");
             this.stream = stream;
+            //stream = client.GetStream();
             listenToClientThread = new Thread(() => RecieveDataLinesFromClient(stream)) { IsBackground = true };
             listenToClientThread.Start();
 
@@ -112,11 +114,26 @@ namespace GameServer.Client_Facing.Messages
 
                 //string message = reader.ReadLine() ?? "";
                 //return message;
+                
                 while (client.Connected)
                 {
-                    string message = reader.ReadLine() ?? "";
-                    SortClientMessage(message);
+                    player.Print("Listening For Message");
+                    //string message = reader.ReadLine() ?? "";
+                    string? message = reader.ReadLine();
+                    if(message!=null)
+                    {
+                        player.Print($"Got Message: [{message}]");
+                        SortClientMessage(message);
+                    }
+                    else
+                    {
+                        player.Print("WARNING: Player got an null message We assume this Means the Player Has Disconnected and reflect that by disconnecting client");
+                        client.Close();
+                    }
+                       
+                    
                 }
+                player.Print("Listen For Message Loop Broken");
             }
             catch (Exception e)
             {
@@ -130,6 +147,7 @@ namespace GameServer.Client_Facing.Messages
         public string SortClientMessage(string message)
         {
             player.Print("Sorting Message: " + message);
+            player.Print("Client Is Connected: " + client.Connected);
             string returnString = "";
             IClientMessage? temp=null;
             Testing.Print("[ClientMessageHandler]SortClientMessage> Deserializing into Shot Message");

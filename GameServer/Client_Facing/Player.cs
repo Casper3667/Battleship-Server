@@ -43,7 +43,7 @@ namespace GameServer.Client_Facing
 
 
         private JWT token;
-        private TcpClient client;
+        public TcpClient client { get; private set; }
         public  GameServer gameServer { get; private set; }
 
         private NetworkStream stream;
@@ -58,7 +58,7 @@ namespace GameServer.Client_Facing
         public Player(string username, TcpClient client,GameServer server,JWT token)
         {
             this.client = client;
-            ClientMessageHandler = new(this, this.client);
+            ClientMessageHandler = new(this);
             Username = username;
             this.token = token;
             this.gameServer = server;
@@ -69,7 +69,7 @@ namespace GameServer.Client_Facing
         {
             this.client = client;
 
-            ClientMessageHandler = new(this, this.client);
+            ClientMessageHandler = new(this);
             Username = username;
             this.token=token;
             this.gameServer = server;
@@ -97,6 +97,13 @@ namespace GameServer.Client_Facing
             AttackScreen[(int)point.X, (int)point.Y] = (byte)value;
             Testing.Print($"[{point.X},{point.Y}] in Attack Screen is now: [{AttackScreen[(int)point.X, (int)point.Y]}]");
         }
+        public void ResetScreens()
+        {
+            Print("Resetting Attack And Defence Screen");
+            AttackScreen = new byte[AttackScreen.GetLength(0), AttackScreen.GetLength(1)];
+            DefenceScreen = new byte[DefenceScreen.GetLength(0), DefenceScreen.GetLength(1)];
+        }
+        
         public bool CheckIfShotHits(Vector2 shotAgainst)
         {
             switch (DefenceScreen[(int)shotAgainst.X,(int)shotAgainst.Y])
@@ -173,6 +180,7 @@ namespace GameServer.Client_Facing
         public void SendRawGameStateMessage(RawGameStateMessage message)
         {
             string data = gameServer.SerializeMessage(message);
+            Print("Sending GameStateMessage:\n" + data);
             gameServer.SendMessageLine(data, stream);
         }
         #endregion
@@ -180,7 +188,7 @@ namespace GameServer.Client_Facing
 
         public void Print(string message)
         {
-            Console.WriteLine($"[{Username}]:" + message);
+            Console.WriteLine($"[Player:{Username}]:" + message);
         }
     }
     
