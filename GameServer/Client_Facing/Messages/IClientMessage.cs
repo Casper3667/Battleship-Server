@@ -15,7 +15,14 @@ namespace GameServer.Client_Facing.Messages
     public class RawChatMessageFromClient : IClientMessage
     {
         public string From { get; set; } = "";
+        public ChatType To { get; set; }
         public string Message { get; set; } = "";
         public bool ValidRawChatMessageFromClient { get; set; }
+    }
+
+    public enum ChatType
+    {
+        Private,
+        Group
     }
 }

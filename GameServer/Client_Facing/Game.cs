@@ -21,6 +21,33 @@ namespace GameServer.Client_Facing
 
         public byte[,] Player1DefaultDefence { get; private set; } = new byte[,] { { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 0, 0, 0, 0, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 0, 0, 0, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 0, 0, 0, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 0, 0, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
         public byte[,] Player2DefaultDefence { get; private set; } = new byte[,] { { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 }, { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 }, { 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 }, { 0, 1, 0, 1, 1, 1, 1, 1, 1, 1 }, { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
+
+        public byte[,] Player1NewDefaultDefence { get; private set; } = new byte[,]
+        {
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 } };
+        public byte[,] Player2NewDefaultDefence { get; private set; } = new byte[,]
+        {
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 0, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 },
+         { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 } };
+
+
         CancellationTokenSource cancellationSource;
 
         public string LastAction { get; private set; }     
@@ -34,9 +61,11 @@ namespace GameServer.Client_Facing
         public void StartGame()
         {
             GameRunning= true;
-            GivePlayersDefaultGameBoards();
+            //GivePlayersDefaultGameBoards();
+            GivePlayersNewDefaultGameBoards();
+            //TEST_GivePlayer1CustomGameBoard();
             CurrentPlayersTurn = Player1;
-
+            LastAction = $"Game Started"/*+$" The First Turn Goes To: {CurrentPlayersTurn.Username}"*/;
             SendPlayersCurrentGameState(false);
             
             StartUpdateLoop();
@@ -84,8 +113,11 @@ namespace GameServer.Client_Facing
             }
             else
             {
-                ChangeCurrentPlayersTurn();
-                SendPlayersCurrentGameState(false);
+                if(cancellationSource.IsCancellationRequested==false)
+                {
+                    ChangeCurrentPlayersTurn();
+                    SendPlayersCurrentGameState(false);
+                }
             }
             
             
@@ -135,6 +167,7 @@ namespace GameServer.Client_Facing
         {
             TimeSpan TurnTimer = MaxTurnTime;
             ShotMessage? shot = null;
+            (int x, int y) = Console.GetCursorPosition();
             while (TurnTimer.TotalSeconds>0 && TurnTimer!=TimeSpan.Zero)  
             {
                 shot = CurrentPlayersTurn.ClientMessageHandler.LatestShotMessage;
@@ -143,7 +176,14 @@ namespace GameServer.Client_Facing
                 else
                 {
                     Thread.Sleep(100);
-                    TurnTimer.Subtract(TimeSpan.FromMilliseconds(100));
+                    TurnTimer=TurnTimer.Subtract(TimeSpan.FromMilliseconds(100));
+                    Console.SetCursorPosition(x, y);
+                    Console.WriteLine("Game TurnTimer: " + TurnTimer.TotalSeconds.ToString());
+                    if (cancellationSource.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Game Is Cancelled so Turn Has Ended");
+                        return null;
+                    }
                 }
 
                 
@@ -223,19 +263,29 @@ namespace GameServer.Client_Facing
         {
             GivePlayersGameBoards(Player1DefaultDefence, Player2DefaultDefence);
         }
+        public void GivePlayersNewDefaultGameBoards()
+        {
+            GivePlayersGameBoards(Player1NewDefaultDefence, Player2NewDefaultDefence);
+        }
         public void GivePlayersGameBoards(byte[,] player1, byte[,]player2)
         {
             Players[0].AssignDefenceScreen(player1);
             Players[1].AssignDefenceScreen(player2);
 
         }
+       
         
         public void ChangeCurrentPlayersTurn()
         {
-            if (CurrentPlayersTurn != null)
-                CurrentPlayersTurn = GetOtherPlayer(CurrentPlayersTurn);
+            if (cancellationSource.IsCancellationRequested == false)
+            {
+                if (CurrentPlayersTurn != null)
+                    CurrentPlayersTurn = GetOtherPlayer(CurrentPlayersTurn);
+                else
+                    CurrentPlayersTurn = Player1;
+            }
             else
-                CurrentPlayersTurn = Player1;
+                Console.WriteLine("Couldnt Change Player Since Game Is Cancelled");
         }
 
         public Player GetOtherPlayer(Player player)
@@ -262,10 +312,18 @@ namespace GameServer.Client_Facing
         }
         public RawGameStateMessage WriteGameStateMessage(Player player, bool HasBeenWon)
         {
+            string turnname="";
+            if (CurrentPlayersTurn == player)
+            {
+                turnname = "Your";
+            }
+            else
+                turnname = "Your Opponents";
+            string feedback = LastAction + $"[Its {turnname} Turn]";
             var message = new RawGameStateMessage
                 (
                 Server.GetOtherPlayerUsername(player),
-                LastAction,
+                feedback,
                 ConvertMultiArrayToString(player.AttackScreen),
                 ConvertMultiArrayToString(player.DefenceScreen),
                 HasBeenWon/*(HasBeenWon)? true: !GameRunning*/,
@@ -287,9 +345,9 @@ namespace GameServer.Client_Facing
 
             bool firstnumber = true;
             StringBuilder sb = new StringBuilder();
-            for (int x = 0; x < xlength; x++)
+            for (int y = 0; y < ylength; y++)
             {
-                for (int y = 0; y < ylength; y++)
+                for (int x = 0; x < xlength; x++)
                 {
                     if (firstnumber)
                     {
@@ -308,7 +366,23 @@ namespace GameServer.Client_Facing
         }
         #endregion
 
+        #region TESTING
+        private void TEST_GivePlayer1CustomGameBoard()
+        {
+            var player1board = new byte[10, 10];
+            for(int y =0;  y < 10; y++)
+            {
+                for (int x = 0; x < 10; x++)
+                {
+                    player1board[x, y] = (byte)((x * 10) + y);
+                }
+            }
+            
 
+
+            GivePlayersGameBoards(player1board, Player2DefaultDefence);
+        }
+        #endregion
 
     }
 }

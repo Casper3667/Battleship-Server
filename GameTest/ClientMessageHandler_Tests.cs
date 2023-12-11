@@ -20,7 +20,7 @@ namespace GameTest
         ClientMessageHandler handler;
 
         ShotMessage Default_Valid_ShotMessage = new ShotMessage() { X = 1, Y = 1, ValidShotMessage = true};
-        RawChatMessageFromClient Default_Valid_RawChatMessageFromClient = new RawChatMessageFromClient() { From = "Sofie", Message = "Hello World", ValidRawChatMessageFromClient = true };
+        RawChatMessageFromClient Default_Valid_RawChatMessageFromClient = new RawChatMessageFromClient() { From = "Sofie",To=ChatType.Private, Message = "Hello World", ValidRawChatMessageFromClient = true };
 
         [SetUp]
         public void Setup()
@@ -109,7 +109,7 @@ namespace GameTest
             bool expectValid = false;
             IClientMessage? result = handler.DeserializeMessage<ShotMessage>(jsonstring);
 
-            string expectstring = "{\"From\":\"Sofie\",\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
+            string expectstring = "{\"From\":\"Sofie\",\"To\":0,\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
 
             Assert.Multiple(() =>
             {
@@ -119,13 +119,13 @@ namespace GameTest
             });
         }
         [Test]
-        public void Test_MessageHandler_DeserializeMessage_RawChatMessageFromClient_Valid()
+        public void Test_MessageHandler_DeserializeMessage_RawChatMessageFromClient_Valid_Private()
         {
             RawChatMessageFromClient input = Default_Valid_RawChatMessageFromClient;
             string jsonstring = JsonSerializer.Serialize(input);
             RawChatMessageFromClient expect = input;
             IClientMessage? result = handler.DeserializeMessage<RawChatMessageFromClient>(jsonstring);
-            string expectstring = "{\"From\":\"Sofie\",\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
+            string expectstring = "{\"From\":\"Sofie\",\"To\":0,\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
             Assert.Multiple(() =>
             {
             Assert.That(
@@ -135,6 +135,27 @@ namespace GameTest
                 , Is.True, "Main Test: Is the result the same as the original input");;
                 Assert.That(((RawChatMessageFromClient)result).ValidRawChatMessageFromClient, Is.True, "Side Test: Is Result Valid");
                 Assert.That(jsonstring, Is.EqualTo(expectstring), "Side Test: Is The json String what you would expect");
+                Assert.That(((RawChatMessageFromClient)result).To, Is.EqualTo(input.To),"Checks That Message Type is Correct");
+            });
+        }
+        [Test]
+        public void Test_MessageHandler_DeserializeMessage_RawChatMessageFromClient_Valid_Group()
+        {
+            RawChatMessageFromClient input = new RawChatMessageFromClient() { From = "Sofie", To = ChatType.Group, Message = "Hello World", ValidRawChatMessageFromClient = true };
+            string jsonstring = JsonSerializer.Serialize(input);
+            RawChatMessageFromClient expect = input;
+            IClientMessage? result = handler.DeserializeMessage<RawChatMessageFromClient>(jsonstring);
+            string expectstring = "{\"From\":\"Sofie\",\"To\":1,\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    ((RawChatMessageFromClient)result).From == input.From ==
+                    (((RawChatMessageFromClient)result).Message == input.Message) ==
+                    (((RawChatMessageFromClient)result).ValidRawChatMessageFromClient == input.ValidRawChatMessageFromClient)
+                    , Is.True, "Main Test: Is the result the same as the original input"); ;
+                Assert.That(((RawChatMessageFromClient)result).ValidRawChatMessageFromClient, Is.True, "Side Test: Is Result Valid");
+                Assert.That(jsonstring, Is.EqualTo(expectstring), "Side Test: Is The json String what you would expect");
+                Assert.That(((RawChatMessageFromClient)result).To, Is.EqualTo(input.To), "Checks That Message Type is Correct");
             });
         }
         [Test]
@@ -198,7 +219,7 @@ namespace GameTest
             RawChatMessageFromClient input = Default_Valid_RawChatMessageFromClient;
             string jsonstring = JsonSerializer.Serialize(input);
             string expect = "RawChatMessageFromClient";        
-            string expectJsonString = "{\"From\":\"Sofie\",\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
+            string expectJsonString = "{\"From\":\"Sofie\",\"To\":0,\"Message\":\"Hello World\",\"ValidRawChatMessageFromClient\":true}";
             
             string result = handler.SortClientMessage(jsonstring);
 
@@ -219,7 +240,7 @@ namespace GameTest
 
             string expect = "InvalidMessage";
             string expectJsonShotMessage = "{\"X\":0,\"Y\":0,\"ValidShotMessage\":false}";
-            string expectJsonChatMessage = "{\"From\":\"\",\"Message\":\"\",\"ValidRawChatMessageFromClient\":false}";
+            string expectJsonChatMessage = "{\"From\":\"\",\"To\":0,\"Message\":\"\",\"ValidRawChatMessageFromClient\":false}";
 
             Assert.Multiple(() =>
             {
